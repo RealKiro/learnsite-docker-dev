@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16  # 使用 PostgreSQL 16（可根据需要选择版本）
+    container_name: learnsite-db
+    environment:
+      - POSTGRES_DB=learnsite
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=YourStrong!Password  # 【必须修改】
+    ports:
+      - "5432:5432"  # 如果需要外部连接可保留，否则可删除
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # 可选：挂载初始化脚本（如需要自动创建表）
+      # - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - learnsite-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  learnsite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: learnsite-app
+    ports:
+      - "8080:8080"  # 宿主机端口可调整
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # PostgreSQL 连接字符串（格式：Host=postgres;Database=learnsite;Username=postgres;Password=...）
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=learnsite;Username=postgres;Password=YourStrong!Password
+      # 中文支持（.NET 默认使用不变文化，需启用全球化）
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+      - TZ=Asia/Shanghai
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - learnsite-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  learnsite-net:
+    driver: bridge
