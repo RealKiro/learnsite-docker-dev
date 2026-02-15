@@ -1,0 +1,2 @@
+# learnsite-docker-dev
+OpenLearnSite信息科技学习平台Docker部署文件，拟适配基于.net10+postgresql重构的预览版learnsite源码
